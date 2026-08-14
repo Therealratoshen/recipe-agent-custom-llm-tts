@@ -15,6 +15,10 @@ full STT → custom audio endpoint → RTC pipeline immediately, then replace th
 - [ngrok](https://ngrok.com/) (or any tunnel to expose localhost)
 - Agora App ID + App Certificate (the [Agora CLI](https://github.com/AgoraIO/cli) makes this easy)
 
+The same commands work on macOS, Linux, and Windows. On macOS/Linux, setup uses
+`python3`; on Windows, it uses the Python launcher (`py`) or `python`. WSL and
+virtualenv activation are not required.
+
 ## Run it
 
 ```bash
