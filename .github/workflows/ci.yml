@@ -38,3 +38,21 @@ jobs:
         working-directory: web
       - run: bun run verify
         working-directory: web
+
+  windows:
+    name: setup + web (windows)
+    runs-on: windows-latest
+    env:
+      AGENT_BACKEND_URL: http://localhost:8000
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - uses: oven-sh/setup-bun@v2
+      - run: bun run setup
+      - run: bun run verify:backend
+      - run: bun run verify:backend:pytest
+      - run: bun run verify:local:fastapi
+      - run: bun run verify:local:llm
+      - run: bun run verify:web

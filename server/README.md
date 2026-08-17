@@ -24,11 +24,12 @@ transcribes the user's speech into text for the LLM.
 Use the repo-root `README.md` for the full local flow (`bun run dev`). To work on
 this module directly:
 
-```bash
-cd server
-python3 -m venv venv && source venv/bin/activate
-pip install -r requirements.txt
-python src/server.py
+The root commands below select the correct virtualenv interpreter on macOS,
+Linux, and Windows, so activation is not required:
+
+```shell
+bun run setup:server
+bun run backend
 ```
 
 ## Environment

@@ -98,10 +98,10 @@ async function waitForHealthyBackend(baseUrl: string, timeoutMs: number) {
 async function main() {
   const projectRoot = process.cwd()
   const serverRoot = path.resolve(projectRoot, '..', 'server')
-  const venvPython = path.join(serverRoot, 'venv', 'bin', 'python')
+  const venvPython = path.join(serverRoot, 'venv', process.platform === 'win32' ? 'Scripts/python.exe' : 'bin/python')
 
   if (!existsSync(venvPython)) {
-    throw new Error('Missing server/venv/bin/python. Run bun run setup:server before verify:local.')
+    throw new Error('Missing server virtualenv. Run bun run setup:server before verify:local.')
   }
 
   const dependencyCheck = bunRuntime.Bun.spawnSync({
