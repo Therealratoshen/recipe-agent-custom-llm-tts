@@ -111,6 +111,77 @@ audio source. Keep the SSE contract (transcript chunk + base64 PCM16/16kHz chunk
 `[DONE]`) — the transcript is required for agent context. Keep `llm.py` free of
 `agora-agents` (a test enforces this). See [`server/README.md`](server/README.md).
 
+### Example: bundled sample audio (zero-credential swap-in)
+
+> **⚠️ This is a PLACEHOLDER, not a real TTS integration.**
+> The bundled WAV is a 2-second 440 Hz tone with a short envelope — the
+> recipe author generated it deterministically with Python's stdlib so the
+> PR has zero external dependencies. **Operators replace the file** with
+> whatever audio they actually want to ship (see the `ffmpeg` snippet below).
+
+This fork ships a placeholder WAV at `server/assets/sample.wav` (mono PCM16,
+16 kHz, ~2 s). On boot, `llm.py` loads the file once and the endpoint plays
+that audio instead of the sine-tone mock. Operators who want their own audio
+drop a different file at the same path — the recipe enforces the
+mono/PCM16/16 kHz contract at module import so a malformed asset fails fast
+instead of sending garbage PCM to the user.
+
+```bash
+# Replace the bundled placeholder with your own audio. Anything that
+# satisfies the contract works: a clip rendered by an offline TTS engine,
+# a recording from a microphone, a previously-synthesized sample.
+ffmpeg -i your_audio.wav -ac 1 -ar 16000 -sample_fmt s16 \
+    server/assets/sample.wav
+```
+
+The endpoint is intentionally credential-free: no API key, no model
+download, no network call. This makes the recipe trivially reviewable and
+keeps CI green without setup. Want a real TTS/LLM? Look at `audio_source()`
+in [`server/src/llm.py`](server/src/llm.py) — that's the function this PR
+leaves for you to swap with your provider of choice.
+
+See [`server/tests/test_bundled_sample.py`](server/tests/test_bundled_sample.py)
+for the behavioural contract: bundled-sample load, end-to-end SSE
+streaming, fallback when the asset is missing, and module-loadability
+without any environment variables.
+
+### Zero-signup verification
+
+The bundled-sample PR is intentionally verifiable end-to-end with **nothing
+but `git clone` + `pip install fastapi uvicorn pytest` + `curl`** — no Agora
+credentials, no vendor API key, no model download, no tunnel, no `bun`.
+
+```bash
+# 1. Install ONLY fastapi + uvicorn + pytest (no agora-agents, no bun)
+pip install fastapi uvicorn pytest
+
+# 2. Run the zero-signup smoke test (boots /chat/completions on a
+#    random free port, streams the SSE contract, byte-compares the
+#    returned PCM against server/assets/sample.wav)
+./scripts/verify_zero_signup.sh
+```
+
+Or via pytest, if you prefer:
+
+```bash
+pytest server/tests/test_zero_signup_e2e.py -v
+```
+
+Expected output:
+
+```
+[verify] PASS — zero-signup demo works end-to-end
+[verify]   - server boots without AGORA_APP_ID / AGORA_APP_CERTIFICATE
+[verify]   - POST /chat/completions returns SSE with transcript + base64 PCM + [DONE]
+[verify]   - streamed PCM (62xxx bytes) matches bundled asset byte-for-byte
+```
+
+This is the maintainer-facing "will this PR's demo work without me signing up
+for anything?" gate. The Agora credentials only matter for the *full* recipe
+(`server.py` token/agent endpoints), which is upstream and out of scope for
+this PR. The contribution itself — `server/src/llm.py` — is fully
+credential-free, and `scripts/verify_zero_signup.sh` proves it.
+
 ## Troubleshooting
 
 | Problem | Fix |
